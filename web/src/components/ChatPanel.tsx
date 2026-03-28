@@ -71,11 +71,11 @@ export default function ChatPanel({
     if (!pendingAction || !open) return;
     const prompt = buildPrompt(pendingAction.action ?? "ask", pendingAction.text);
     onPendingActionConsumed();
-    sendMessage(prompt);
+    sendMessage(prompt, pendingAction.sectionId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAction, open]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, sectionId?: string | null) => {
     if (!text.trim() || streaming) return;
 
     setFollowups([]);
@@ -102,7 +102,14 @@ export default function ChatPanel({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, message: text.trim() }),
+        body: JSON.stringify({
+          document_id: documentId,
+          message: text.trim(),
+          section_id: sectionId ?? null,
+          conversation_history: messages
+            .filter(m => !m.streaming)
+            .map(m => ({ role: m.role, content: m.content })),
+        }),
         signal: controller.signal,
       });
 
@@ -125,18 +132,21 @@ export default function ChatPanel({
           if (line.startsWith("data: ")) {
             const data = line.slice(6).trim();
             if (data === "[DONE]") break;
+            let parsed: Record<string, unknown> | null = null;
             try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === "text_delta" && parsed.text) {
-                fullContent += parsed.text;
-                setMessages(prev =>
-                  prev.map(m =>
-                    m.id === assistantMsg.id ? { ...m, content: fullContent } : m
-                  )
-                );
-              }
+              parsed = JSON.parse(data);
             } catch {
               // non-JSON line
+            }
+            if (parsed?.type === "text_delta" && parsed.text) {
+              fullContent += parsed.text as string;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantMsg.id ? { ...m, content: fullContent } : m
+                )
+              );
+            } else if (parsed?.type === "error") {
+              throw new Error((parsed.message as string) ?? "AI service error");
             }
           }
         }
@@ -161,7 +171,7 @@ export default function ChatPanel({
       fetch("/api/followups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, lastQuestion: text.trim(), lastAnswer: fullContent }),
+        body: JSON.stringify({ document_id: documentId, section_id: sectionId ?? null }),
       })
         .then(r => r.json())
         .then(data => {
@@ -183,7 +193,7 @@ export default function ChatPanel({
       setStreaming(false);
       abortRef.current = null;
     }
-  }, [documentId, streaming, onMessagesUpdate]);
+  }, [documentId, streaming, onMessagesUpdate, messages]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
