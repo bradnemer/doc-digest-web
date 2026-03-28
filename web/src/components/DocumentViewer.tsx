@@ -238,6 +238,15 @@ export default function DocumentViewer({
             >
               Export PDF
             </button>
+            <button
+              onClick={() => setChatOpen(o => !o)}
+              className="no-print text-xs px-3 py-1.5 rounded-lg border transition-colors"
+              style={chatOpen
+                ? { borderColor: "var(--accent)", background: "var(--accent-light)", color: "var(--accent)" }
+                : { borderColor: "var(--border)", color: "var(--text-secondary)" }}
+            >
+              Chat
+            </button>
           </header>
 
           {/* Doc header */}
@@ -318,17 +327,6 @@ export default function DocumentViewer({
           </div>
         </div>
       </div>
-
-      {/* Chat FAB */}
-      <button
-        id="chat-toggle"
-        onClick={() => setChatOpen(true)}
-        className="no-print fixed bottom-6 right-6 w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center shadow-lg z-30 transition-transform hover:scale-105"
-        style={{ background: "var(--accent)", display: chatOpen ? "none" : "flex" }}
-        aria-label="Open chat"
-      >
-        💬
-      </button>
 
       {/* Chat Panel */}
       <ChatPanel
