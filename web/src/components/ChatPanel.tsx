@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ChatMessage } from "@/types/database";
+import { renderMarkdown } from "@/lib/markdown";
 
 interface Props {
   documentId: string;
@@ -279,9 +280,22 @@ export default function ChatPanel({
                     : { background: "var(--bg-secondary)", color: "var(--text-primary)", borderBottomLeftRadius: 4 }
                 }
               >
-                {m.content || (m.streaming ? <ThinkingDots /> : null)}
-                {m.streaming && m.content && (
-                  <span className="inline-block w-1 h-4 ml-0.5 align-middle animate-pulse" style={{ background: "var(--text-secondary)", borderRadius: 1 }} />
+                {m.role === "assistant" ? (
+                  m.content ? (
+                    <>
+                      <div className="chat-markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }} />
+                      {m.streaming && (
+                        <span className="inline-block w-1 h-4 ml-0.5 align-middle animate-pulse" style={{ background: "var(--text-secondary)", borderRadius: 1 }} />
+                      )}
+                    </>
+                  ) : (m.streaming ? <ThinkingDots /> : null)
+                ) : (
+                  <>
+                    {m.content}
+                    {m.streaming && m.content && (
+                      <span className="inline-block w-1 h-4 ml-0.5 align-middle animate-pulse" style={{ background: "var(--text-secondary)", borderRadius: 1 }} />
+                    )}
+                  </>
                 )}
               </div>
             </div>
