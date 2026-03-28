@@ -88,12 +88,13 @@ export default function UploadModal({
     setStage("processing");
 
     // Poll for completion
-    const poll = async (): Promise<void> => {
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       const res = await fetch(`/api/documents/${docData.id}/status`);
       const status = await res.json();
 
       if (status.status === "ready") {
-        // Fetch full document record and navigate
         const docRes = await fetch(`/api/documents`);
         const docs = await docRes.json();
         const doc = docs.find((d: Document) => d.id === docData.id);
@@ -109,12 +110,7 @@ export default function UploadModal({
         setStage("error");
         return;
       }
-
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      return poll();
-    };
-
-    await poll();
+    }
   }, [router, onComplete]);
 
   function handleDrop(e: React.DragEvent) {
