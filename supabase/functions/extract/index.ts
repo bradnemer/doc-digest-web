@@ -141,9 +141,18 @@ function extractMarkdown(text: string, filename: string): DocumentData {
 
 // ── PDF extraction via Anthropic PDF API ──────────────────────────────────
 
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 async function extractPdf(pdfBytes: Uint8Array, filename: string): Promise<DocumentData> {
   const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-  const base64 = btoa(String.fromCharCode(...pdfBytes));
+  const base64 = uint8ArrayToBase64(pdfBytes);
 
   const prompt = `Extract this document into structured sections and return ONLY valid JSON with no surrounding text or markdown fences.
 
