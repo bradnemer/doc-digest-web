@@ -73,8 +73,8 @@ export default function DocumentViewer({
           setSelectionState({
             text,
             sectionId: (sectionEl as HTMLElement)?.dataset.sectionId ?? null,
-            x: e.pageX,
-            y: e.pageY,
+            x: e.clientX,
+            y: e.clientY,
           });
         } else {
           setSelectionState(null);

@@ -31,10 +31,9 @@ export default function SelectionPopup({
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const scrollY = window.scrollY;
-    // Position above the cursor
+    // Position above the cursor, clamped to viewport edges
     el.style.left = Math.min(x, window.innerWidth - rect.width - 8) + "px";
-    el.style.top = y + scrollY - rect.height - 12 + "px";
+    el.style.top = Math.max(8, y - rect.height - 12) + "px";
   });
 
   return (
@@ -47,7 +46,6 @@ export default function SelectionPopup({
         borderColor: "var(--border)",
         top: y - 52,
         left: x,
-        position: "absolute",
       }}
     >
       {ACTIONS.map(({ key, label }) => (
