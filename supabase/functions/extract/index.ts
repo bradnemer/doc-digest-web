@@ -239,21 +239,12 @@ Deno.serve(async (req: Request) => {
 
   const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // Respond 202 immediately so Next.js doesn't wait
-  // Extraction runs in background via EdgeRuntime.waitUntil
-  const extractionPromise = runExtraction(sb, document_id, user_id, raw_file_path, source_type);
+  // Run synchronously — Next.js fires this request without awaiting the response,
+  // so the Edge Function can take as long as needed (up to 150s).
+  await runExtraction(sb, document_id, user_id, raw_file_path, source_type);
 
-  // @ts-ignore — Deno/Supabase edge runtime global
-  if (typeof EdgeRuntime !== "undefined") {
-    // @ts-ignore
-    EdgeRuntime.waitUntil(extractionPromise);
-  } else {
-    // Local dev: run synchronously
-    await extractionPromise;
-  }
-
-  return new Response(JSON.stringify({ status: "accepted" }), {
-    status: 202,
+  return new Response(JSON.stringify({ status: "ok" }), {
+    status: 200,
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 });
